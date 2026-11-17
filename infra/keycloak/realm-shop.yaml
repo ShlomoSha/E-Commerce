@@ -1,0 +1,95 @@
+realm: shop
+enabled: true
+
+accessTokenLifespan: 300
+revokeRefreshToken: true
+refreshTokenMaxReuse: 0 
+ssoSessionIdleTimeout: 1800
+ssoSessionMaxLifespan: 36000
+
+bruteForceProtected: true
+registrationAllowed: true
+verifyEmail: false
+
+roles:
+  realm:
+    - name: customer
+      description: Every registered shopper
+    - name: admin
+      description: Back-office staff
+    - name: default-roles-shop
+      composite: true
+      composites:
+        realm:
+          - customer
+        client:
+          account:
+            - view-profile
+            - manage-account
+  
+  client:
+    payments-service:
+      - name: charge
+        description: Charge a customer
+      - name: refund
+        description: Refund a customer
+
+clients:
+  - clientId: payments-service
+    enabled: true
+    publicClient: false
+    standardFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+
+  - clientId: orders-service
+    enabled: true
+    publicClient: false
+    secret: orders-dev-secret
+    standardFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: true
+    protocolMappers:
+      - name: audience-payments-service
+        protocol: openid-connect
+        protocolMapper: oidc-audience-mapper
+        config:
+          included.client.audience: payments-service
+          access.token.claim: "true"
+          id.token.claim: "false"
+          introspection.token.claim: "true"
+    
+  - clientId: shop-bff
+    enabled: true
+    publicClient: false
+    secret: shop-bff-dev-secret
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    frontchannelLogout: false
+    redirectUris:
+      - http://localhost:3000/auth/callback
+    attributes:
+      pkce.code.challenge.method: S256
+      post.logout.redirect.uris: http://localhost:3000
+      backchannel.logout.url: http://host.docker.internal:3000/auth/backchannel-logout
+      backchannel.logout.session.required: "true"
+    protocolMappers:
+      - name: audience-orders-service
+        protocol: openid-connect
+        protocolMapper: oidc-audience-mapper
+        config:
+          included.client.audience: orders-service
+          access.token.claim: "true"
+          id.token.claim: "false"
+          introspection.token.claim: "true"
+
+users:
+  - username: service-account-orders-service
+    enabled: true
+    serviceAccountClientId: orders-service
+    realmRoles: []
+    clientRoles:
+      payments-service:
+        - charge
