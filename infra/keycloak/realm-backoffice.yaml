@@ -1,0 +1,45 @@
+realm: backoffice
+enabled: true
+
+accessTokenLifespan: 300
+revokeRefreshToken: true
+refreshTokenMaxReuse: 0
+ssoSessionIdleTimeout: 900
+ssoSessionMaxLifespan: 28800
+
+bruteForceProtected: true
+registrationAllowed: false
+verifyEmail: false
+passwordPolicy: "length(12)"
+
+roles:
+  realm:
+    - name: admin
+      description: Store administrator
+    - name: default-roles-backoffice
+      composite: true
+      composites:
+        realm: []
+        client:
+          account:
+            - view-profile
+            - manage-account
+
+clients:
+  - clientId: admin-bff
+    enabled: true
+    publicClient: false
+    secret: admin-bff-dev-secret
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    frontchannelLogout: false
+    webOrigins: []
+    redirectUris:
+      - http://localhost:3001/auth/callback
+    attributes:
+      pkce.code.challenge.method: S256
+      post.logout.redirect.uris: http://localhost:3001
+      backchannel.logout.url: http://host.docker.internal:3001/auth/backchannel-logout
+      backchannel.logout.session.required: "true"
